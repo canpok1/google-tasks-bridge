@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRequestHandler } from "./request";
 
 const KEY = "0123456789abcdef";
@@ -9,6 +9,13 @@ const setup = (key: string | null = KEY) => {
 };
 
 describe("createRequestHandler", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("合言葉が合えばメソッド名と入力を dispatcher に渡す", () => {
     const { dispatch, handle } = setup();
 
@@ -45,5 +52,12 @@ describe("createRequestHandler", () => {
 
   it("method が無ければ INVALID", () => {
     expect(setup().handle(JSON.stringify({ key: KEY }))).toMatchObject({ ok: false, error: { code: "INVALID" } });
+  });
+
+  it("拒否したことはログに出すが、合言葉は出さない", () => {
+    setup().handle(JSON.stringify({ key: "0123456789abcdeX", method: "listTaskLists" }));
+
+    expect(console.warn).toHaveBeenCalledWith("拒否 -> UNAUTHORIZED: 合言葉が違います");
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain("0123456789abcde");
   });
 });

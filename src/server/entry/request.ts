@@ -19,18 +19,19 @@ export const createRequestHandler =
     try {
       request = JSON.parse(body ?? "");
     } catch {
-      return toEnvelope(new ValidationError("本文が JSON ではありません"));
+      return reject(new ValidationError("本文が JSON ではありません"));
     }
     const key = expectedKey();
     // 合言葉が未発行のうちは、誰の呼び出しも通さない
     if (!key || typeof request?.key !== "string" || !sameKey(request.key, key)) {
-      return toEnvelope(new UnauthorizedError("合言葉が違います"));
+      return reject(new UnauthorizedError("合言葉が違います"));
     }
-    if (typeof request.method !== "string") return toEnvelope(new ValidationError("method が必要です"));
+    if (typeof request.method !== "string") return reject(new ValidationError("method が必要です"));
     return dispatch(request.method, request.input);
   };
 
-const toEnvelope = (e: UnauthorizedError | ValidationError): Envelope => ({
-  ok: false,
-  error: { code: e.code, message: e.message },
-});
+/** 本文は合言葉を含むのでログに出さない */
+const reject = (e: UnauthorizedError | ValidationError): Envelope => {
+  console.warn(`拒否 -> ${e.code}: ${e.message}`);
+  return { ok: false, error: { code: e.code, message: e.message } };
+};
