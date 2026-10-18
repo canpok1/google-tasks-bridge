@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# setup が作る、環境ごとの ID。リポジトリには入れない
+.clasp.json
+.deploy.json

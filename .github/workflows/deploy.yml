@@ -1,0 +1,54 @@
+# main への push で staging 環境へ、v から始まるタグの push で production 環境へデプロイする。
+# デプロイの前に ci.yml と同じ検査を通す。
+# 各環境（Settings > Environments）に SCRIPT_ID / DEPLOYMENT_ID / CLASPRC_JSON のシークレットが無ければ何もしない。
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: ${{ startsWith(github.ref, 'refs/tags/') && 'production' || 'staging' }}
+    concurrency: deploy-${{ github.ref }}
+    env:
+      SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+      DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+      # GAS の「デプロイを管理」に出る名前。環境名にして staging と production を見分ける
+      DEPLOY_NAME: ${{ startsWith(github.ref, 'refs/tags/') && 'production' || 'staging' }}
+    steps:
+      - name: Check secrets
+        id: check
+        run: |
+          if [ -z "$SCRIPT_ID" ] || [ -z "$DEPLOYMENT_ID" ]; then
+            echo "SCRIPT_ID / DEPLOYMENT_ID が未設定のため、デプロイを飛ばします。"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.check.outputs.skip != 'true'
+      - uses: actions/setup-node@v7
+        if: steps.check.outputs.skip != 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        if: steps.check.outputs.skip != 'true'
+        run: npm ci
+      - name: Write clasp credentials
+        if: steps.check.outputs.skip != 'true'
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+      - name: Deploy
+        if: steps.check.outputs.skip != 'true'
+        run: npm run deploy
