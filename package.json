@@ -1,0 +1,13 @@
+{
+  "name": "google-tasks-bridge",
+  "private": true,
+  "description": "Google ToDo リストを Claude から読み書きするための Apps Script Web アプリ",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "push": "clasp push --force",
+    "deploy": "clasp push --force && clasp deploy --deploymentId \"$DEPLOYMENT_ID\" --description \"$(git rev-parse --short HEAD)\""
+  },
+  "devDependencies": {
+    "@google/clasp": "3.4.1"
+  }
+}
