@@ -30,7 +30,7 @@ Google ToDo リスト（Google Tasks）を Claude Code から読み書きする�
 
 `src/shared/api.ts` の `Api` に型を足し、`src/server/application/useCases.ts` に同じ名前のユースケースを足す。dispatcher はメソッド名でユースケースを直接引くので、振り分けの追加は要らない。ユースケースの戻り値は `Api` のメソッドと1対1になるよう `satisfies` で縛っているので、足し忘れると型チェックで落ちる。
 
-**呼び出し側は brain リポジトリの `.claude/skills/google-tasks/scripts/tasks.sh`。** メソッド名・入力・出力を変えたら、そちらも合わせて直す。
+**呼び出し側はこのリポジトリの `.claude/skills/google-tasks/scripts/tasks.sh`（Claude Code のスキル）。** メソッド名・入力・出力を変えたら、同じ PR でそちらも直す。
 
 ## GAS の制約
 
