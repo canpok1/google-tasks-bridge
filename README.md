@@ -2,7 +2,7 @@
 
 Google ToDo リスト（Google Tasks）を、Claude Code などブラウザを持たないプログラムから読み書きするための Google Apps Script（GAS）の Web アプリです。構築した人の Google アカウントで動き、合言葉が合う呼び出しだけを受け付けます。
 
-呼び出し側は [canpok1/brain](https://github.com/canpok1/brain) の `.claude/skills/google-tasks/` です。スマホの Google ToDo リストのアプリで見ているタスクを、Claude Code から一覧・追加・完了・変更するのに使います。
+呼び出し側は、このリポジトリの Claude Code スキル `.claude/skills/google-tasks/` です。別のリポジトリ（[canpok1/brain](https://github.com/canpok1/brain) など）で作業しながら使うときは、このリポジトリの clone を `--add-dir` で参照させます。スマホの Google ToDo リストのアプリで見ているタスクを、Claude Code から一覧・追加・完了・変更するのに使います。
 
 構成は [canpok1/tempnote](https://github.com/canpok1/tempnote) に揃えています。
 
@@ -71,7 +71,7 @@ ToDo リストを使っている Google アカウントで行います。
    `--name staging` のように名前を付けると、GAS の「デプロイを管理」にその名前で表示されます（省略時は `development`）。自動デプロイでは GitHub の環境名（`staging` / `production`）が付きます。
 
 3. `npx clasp open-script` でエディタを開き、関数 `issueApiKey` を実行する。権限の承認を求められたら許可します（「このアプリは Google で確認されていません」と出たら「詳細」から進めます）。**実行ログに出る文字列が合言葉です**
-4. 呼び出し側に、`npm run setup` が表示した Web アプリの URL と合言葉を渡す。brain の google-tasks スキルなら、環境変数 `GOOGLE_TASKS_GAS_URL` と `GOOGLE_TASKS_GAS_KEY` に置きます。呼び出し側のネットワークは `script.google.com` と `script.googleusercontent.com` に届く必要があります
+4. 呼び出し側に、`npm run setup` が表示した Web アプリの URL と合言葉を渡す。google-tasks スキルなら、環境変数 `GOOGLE_TASKS_GAS_URL` と `GOOGLE_TASKS_GAS_KEY` に置きます。呼び出し側のネットワークは `script.google.com` と `script.googleusercontent.com` に届く必要があります
 
 スクリプト ID とデプロイ ID は、git 管理外の `.clasp.json` と `.deploy.json` に保存されます。
 
@@ -116,6 +116,7 @@ src/
     entry/         入口。GAS の doPost が合言葉を確かめ、dispatcher がユースケースへ振り分ける
 scripts/           setup・deploy・マニフェスト生成
 docs/adr/          設計の判断の記録（ADR）
+.claude/skills/google-tasks/  呼び出し側の Claude Code スキル（curl と jq で Web アプリを呼ぶ）
 ```
 
 ユニットテストは対象のファイルの隣に `*.test.ts` として置きます。GAS 版の実装は、Tasks の拡張サービスを真似たフェイク（`src/server/infrastructure/gas/fakeTasks.ts`）の上で動かします。
