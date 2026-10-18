@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "../../shared/errors";
 import type { UseCases } from "../application/useCases";
 import { createDispatcher } from "./dispatcher";
@@ -20,6 +20,15 @@ const useCasesThat = (listTaskLists: UseCases["listTaskLists"]): UseCases => ({
 });
 
 describe("createDispatcher", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("メソッド名に対応するユースケースの結果を成功の封筒に入れる", () => {
     const dispatch = createDispatcher(useCasesThat(() => lists));
 
@@ -52,7 +61,6 @@ describe("createDispatcher", () => {
   });
 
   it("想定外の例外は中身を隠して INTERNAL にする", () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const dispatch = createDispatcher(
       useCasesThat(() => {
         throw new Error("secret detail");
@@ -63,7 +71,26 @@ describe("createDispatcher", () => {
       ok: false,
       error: { code: "INTERNAL", message: "サーバーでエラーが発生しました" },
     });
-    expect(consoleError).toHaveBeenCalled();
-    consoleError.mockRestore();
+    expect(console.error).toHaveBeenCalledWith("listTaskLists input=なし -> INTERNAL", expect.any(Error));
+  });
+
+  it("成功したら実行したメソッドと入力、一覧なら件数をログに出す", () => {
+    const dispatch = createDispatcher(useCasesThat(() => lists));
+
+    dispatch("listTaskLists", { listTitle: "生活" });
+
+    expect(console.log).toHaveBeenCalledWith('listTaskLists input={"listTitle":"生活"} -> 成功: 1 件');
+  });
+
+  it("AppError はコードとメッセージを警告としてログに出す", () => {
+    const dispatch = createDispatcher(
+      useCasesThat(() => {
+        throw new ValidationError("入力が不正です");
+      }),
+    );
+
+    dispatch("listTaskLists", undefined);
+
+    expect(console.warn).toHaveBeenCalledWith("listTaskLists input=なし -> INVALID: 入力が不正です");
   });
 });
